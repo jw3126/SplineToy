@@ -1,0 +1,4 @@
+[deps]
+ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+MakieCore = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
