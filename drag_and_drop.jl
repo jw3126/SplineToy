@@ -141,10 +141,10 @@ function (b::BSpline)(t)::Float64
     tjd = ts[j+d]
     tj1d = ts[j+1+d]
     return_s1 = (tj < tjd) && (tj1 == tj1d)
-    return_s2 = (tj == tjd) && (tj1 < tj1d)
     if !return_s1
         s2 = (tj1d - t) / (tj1d - tj1) * BSpline(ts, j+1, d-1)(t)
     end
+    return_s2 = (tj == tjd) && (tj1 < tj1d)
     if !return_s2
         s1 = (t - tj) / (tjd - tj) * BSpline(ts, j, d-1)(t)
     end
@@ -168,7 +168,7 @@ function MC.convert_arguments(trait::MC.PointBased, b::BSpline)
     MC.convert_arguments(trait, ts, ys)
 end
 
-# @testset "BSpline" begin
+@testset "BSpline" begin
     ts = 0.0:6.0
     B10 = BSpline(ts, 1, 0)
     @test B10(prevfloat(ts[1])) == 0
@@ -224,7 +224,7 @@ end
     @test f3(ts[4]) ≈ 1
 
 
-# end
+end
 
 # knots = 0.0:5.0
 # fap = vlines(knots, color=:black)
