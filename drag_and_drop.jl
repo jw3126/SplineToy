@@ -3,6 +3,7 @@ import MakieCore as MC
 using ArgCheck
 using StaticArrays
 using OffsetArrays
+using Test
 
 function make_drag_and_drop()
     positions = Observable([Point2f(x, x) for x in range(0, 1, length=2)])
@@ -167,14 +168,36 @@ function MC.convert_arguments(trait::MC.PointBased, b::BSpline)
     MC.convert_arguments(trait, ts, ys)
 end
 
-d = 3
-knots = [-1, 0, 1, 2, 3, 4, 5, 6]
-fap = vlines(knots, color=:black)
-plot!(BSpline(knots, 1, 0))
-plot!(BSpline(knots, 1, 1))
-plot!(BSpline(knots, 1, 2))
-plot!(BSpline(knots, 1, 3))
-plot!(BSpline(knots, 1, 4))
-plot!(BSpline(knots, 1, 5))
-# plot!(BSpline(knots, 4, 2))
-fap
+@testset "BSpline" begin
+    ts = 0.0:5.0
+    @test BSpline(ts, 1, 0)(prevfloat(ts[1])) == 0
+    @test BSpline(ts, 1, 0)(ts[1]) == 1
+    @test BSpline(ts, 1, 0)(prevfloat(ts[2])) == 1
+    @test BSpline(ts, 1, 0)(ts[2]) == 0
+    @test BSpline(ts, 1, 0)(ts[3]) == 0
+
+    @test BSpline(ts, 2, 0)(ts[1]) == 0
+    @test BSpline(ts, 2, 0)(prevfloat(ts[2])) == 0
+    @test BSpline(ts, 2, 0)(ts[2]) == 1
+    @test BSpline(ts, 2, 0)(prevfloat(ts[3])) == 1
+    @test BSpline(ts, 2, 0)(ts[3]) == 0
+
+    # BSpline(ts, 1, 1)
+    # BSpline(ts, 1, 2)
+    # BSpline(ts, 1, 3)
+    # BSpline(ts, 1, 4)
+    # BSpline(ts, 1, 5)
+
+end
+
+# d = 3
+# knots = [-1, 0, 1, 2, 3, 4, 5, 6]
+# fap = vlines(knots, color=:black)
+# plot!(BSpline(knots, 1, 0))
+# plot!(BSpline(knots, 1, 1))
+# plot!(BSpline(knots, 1, 2))
+# plot!(BSpline(knots, 1, 3))
+# plot!(BSpline(knots, 1, 4))
+# plot!(BSpline(knots, 1, 5))
+# # plot!(BSpline(knots, 4, 2))
+# fap
