@@ -2,6 +2,7 @@ using GLMakie
 import MakieCore as MC
 using ArgCheck
 using StaticArrays
+using OffsetArrays
 
 function make_drag_and_drop()
     positions = Observable([Point2f(x, x) for x in range(0, 1, length=2)])
@@ -50,6 +51,10 @@ function make_drag_and_drop()
 
     (;fig, ax, positions)
 end
+
+################################################################################
+#### Hermite
+################################################################################
 
 struct Hermite
     points::Vector{SVector{2,Float32}}
@@ -104,7 +109,72 @@ function MC.convert_arguments(trait::MC.PointBased, h::Hermite)
     MC.convert_arguments(trait, pts)
 end
 
-(;fig, ax, positions) = make_drag_and_drop()
-spline = map(Hermite, positions)
-lines!(ax, spline, color=:green)
-fig
+################################################################################
+#### BSpline
+################################################################################
+struct BSpline
+    knots::Vector{Float64}
+    index::Int
+    degree::Int
+    function BSpline(knots, index, degree)
+        @argcheck degree >= 0
+        @argcheck issorted(knots)
+        @argcheck index in 1:nbsplines(;nknots=length(knots), degree)
+        new(knots, index, degree)
+    end
+end
+
+function nbsplines(;nknots, degree)::Int
+    nknots - degree - 1
+end
+
+function (b::BSpline)(t)::Float64
+    j = b.index
+    d = b.degree
+    ts = b.knots
+    tj = ts[j]
+    tj1 = ts[j+1]
+    if d === 0
+        return tj <= t < tj1
+    end
+    tjd = ts[j+d]
+    tj1d = ts[j+1+d]
+    return_s1 = (tj < tjd) && (tj1 == tj1d)
+    return_s2 = (tj == tjd) && (tj1 < tj1d)
+    if !return_s1
+        s2 = (tj1d - t) / (tj1d - tj1) * BSpline(knots, j+1, d-1)(t)
+    end
+    if !return_s2
+        s1 = (t - tj) / (tjd - tj) * BSpline(knots, j, d-1)(t)
+    end
+    if return_s1
+        return s1
+    end
+    if return_s2 
+        return s2
+    end
+    return s1 + s2
+end
+
+function MC.plottype(::BSpline)
+    MC.Lines
+end
+
+function MC.convert_arguments(trait::MC.PointBased, b::BSpline)
+    t_min, t_max = extrema(b.knots)
+    ts = range(t_min, t_max, length=1000)
+    ys = map(b, ts)
+    MC.convert_arguments(trait, ts, ys)
+end
+
+d = 3
+knots = [-1, 0, 1, 2, 3, 4, 5, 6]
+fap = vlines(knots, color=:black)
+plot!(BSpline(knots, 1, 0))
+plot!(BSpline(knots, 1, 1))
+plot!(BSpline(knots, 1, 2))
+plot!(BSpline(knots, 1, 3))
+plot!(BSpline(knots, 1, 4))
+plot!(BSpline(knots, 1, 5))
+# plot!(BSpline(knots, 4, 2))
+fap
