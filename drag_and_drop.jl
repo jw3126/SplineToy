@@ -143,10 +143,10 @@ function (b::BSpline)(t)::Float64
     return_s1 = (tj < tjd) && (tj1 == tj1d)
     return_s2 = (tj == tjd) && (tj1 < tj1d)
     if !return_s1
-        s2 = (tj1d - t) / (tj1d - tj1) * BSpline(knots, j+1, d-1)(t)
+        s2 = (tj1d - t) / (tj1d - tj1) * BSpline(ts, j+1, d-1)(t)
     end
     if !return_s2
-        s1 = (t - tj) / (tjd - tj) * BSpline(knots, j, d-1)(t)
+        s1 = (t - tj) / (tjd - tj) * BSpline(ts, j, d-1)(t)
     end
     if return_s1
         return s1
@@ -168,36 +168,70 @@ function MC.convert_arguments(trait::MC.PointBased, b::BSpline)
     MC.convert_arguments(trait, ts, ys)
 end
 
-@testset "BSpline" begin
-    ts = 0.0:5.0
-    @test BSpline(ts, 1, 0)(prevfloat(ts[1])) == 0
-    @test BSpline(ts, 1, 0)(ts[1]) == 1
-    @test BSpline(ts, 1, 0)(prevfloat(ts[2])) == 1
-    @test BSpline(ts, 1, 0)(ts[2]) == 0
-    @test BSpline(ts, 1, 0)(ts[3]) == 0
+# @testset "BSpline" begin
+    ts = 0.0:6.0
+    B10 = BSpline(ts, 1, 0)
+    @test B10(prevfloat(ts[1])) == 0
+    @test B10(ts[1]) == 1
+    @test B10(prevfloat(ts[2])) == 1
+    @test B10(ts[2]) == 0
+    @test B10(ts[3]) == 0
 
-    @test BSpline(ts, 2, 0)(ts[1]) == 0
-    @test BSpline(ts, 2, 0)(prevfloat(ts[2])) == 0
-    @test BSpline(ts, 2, 0)(ts[2]) == 1
-    @test BSpline(ts, 2, 0)(prevfloat(ts[3])) == 1
-    @test BSpline(ts, 2, 0)(ts[3]) == 0
+    B20 = BSpline(ts, 2, 0)
+    @test B20(ts[1]) == 0
+    @test B20(prevfloat(ts[2])) == 0
+    @test B20(ts[2]) == 1
+    @test B20(prevfloat(ts[3])) == 1
+    @test B20(ts[3]) == 0
 
-    # BSpline(ts, 1, 1)
-    # BSpline(ts, 1, 2)
-    # BSpline(ts, 1, 3)
-    # BSpline(ts, 1, 4)
-    # BSpline(ts, 1, 5)
+    B11 = BSpline(ts, 1, 1)
+    B21 = BSpline(ts, 2, 1)
+    B31 = BSpline(ts, 3, 1)
+    B41 = BSpline(ts, 4, 1)
+    B51 = BSpline(ts, 5, 1)
 
-end
+    @test B11(ts[1]) ≈ 0
+    @test B11(ts[2]) ≈ 1
+    @test B11(ts[3]) ≈ 0
 
-# d = 3
-# knots = [-1, 0, 1, 2, 3, 4, 5, 6]
+    # plateau
+    f1(t) = B11(t) + B21(t) + B31(t) + B41(t) + B51(t)
+    @test f1(ts[1]) ≈ 0
+    @test f1(ts[2]) ≈ 1
+    for t in range(ts[2], ts[6], length=100)
+        @test f1(t) ≈ 1
+    end
+    @test f1(ts[6]) ≈ 1
+    @test f1(ts[7]) ≈ 0
+
+
+    B12 = BSpline(ts, 1, 2)
+    B22 = BSpline(ts, 2, 2)
+    B32 = BSpline(ts, 3, 2)
+    B42 = BSpline(ts, 4, 2)
+    f2(t) = B12(t) + B22(t) + B32(t) + B42(t)
+    @test f2(ts[1]) ≈ 0
+    @test f2(ts[3]) ≈ 1
+    for t in range(ts[3], ts[5], length=100)
+        @test f2(t) ≈ 1
+    end
+
+    B13 = BSpline(ts, 1, 3)
+    B23 = BSpline(ts, 2, 3)
+    B33 = BSpline(ts, 3, 3)
+    f3(t) = B13(t) + B23(t) + B33(t)
+    @test f3(ts[1]) ≈ 0
+    @test f3(ts[4]) ≈ 1
+
+
+# end
+
+# knots = 0.0:5.0
 # fap = vlines(knots, color=:black)
-# plot!(BSpline(knots, 1, 0))
 # plot!(BSpline(knots, 1, 1))
-# plot!(BSpline(knots, 1, 2))
-# plot!(BSpline(knots, 1, 3))
-# plot!(BSpline(knots, 1, 4))
-# plot!(BSpline(knots, 1, 5))
-# # plot!(BSpline(knots, 4, 2))
+# plot!(BSpline(knots, 2, 1))
+# plot!(BSpline(knots, 3, 1))
+# plot!(BSpline(knots, 4, 1))
+# plot!(BSpline(knots, 5, 1))
+# plot!(BSpline(knots, 4, 2))
 # fap
